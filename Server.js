@@ -2,10 +2,13 @@ var express = require("express");
 var mysql   = require("mysql");
 var bodyParser  = require("body-parser");
 var md5 = require('MD5');
-var rest = require("./REST.js");
+var rest = require("./RESTful.api.js");
 var app  = express();
 var chalk = require('chalk'); // works with "node Server.js" not with "npm start"
 var error = chalk.bold.red;
+
+app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
 
 function REST(){
     var self = this;
@@ -33,8 +36,6 @@ REST.prototype.connectMysql = function() {
 
 REST.prototype.configureExpress = function(connection) {
       var self = this;
-      app.use(bodyParser.urlencoded({ extended: true }));
-      app.use(bodyParser.json());
       var router = express.Router();
       app.use('/api', router);
       var rest_router = new rest(router,connection,md5);
