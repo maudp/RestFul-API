@@ -156,7 +156,7 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
 
         if(Bpassword !== undefined) {
             // case where password needs to be updated
-            var queryPass = sqlpass + Bpassword + endquery + where + id + ";\n";
+            var queryPass = sqlpass + md5(Bpassword) + endquery + where + id + ";\n";
         }
         else {
           var queryPass = "";
@@ -188,8 +188,6 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
 
         var query = queryMail + queryPass + queryLast + queryFirst + queryRole;
 
-        var query = query;
-        console.log(query);
         var table = ["user","lastname","firstname", "email", "password", "role",Blastname,Bfirstname,Bmail,md5(Bpassword),Brole];
         query = mysql.format(query,table);
         connection.query(query,function(err,rows){
@@ -222,18 +220,75 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
       }
     });
 
-    router.delete("/user/:email",function(req,res){
-        var query = "DELETE from ?? WHERE ??=?";
-        var table = ["user_login","user_email",req.params.email];
+    router.delete("/user/:id",function(req,res){
+        var id = req.params.id;
+        //SELECT * FROM `user` WHERE `id` = "94" AND `role` = "admin"
+        var query = "SELECT * FROM `user` WHERE `id` = " + "'" + id + "'" + " AND `role` = 'admin'";
+
+        var table = ["user","id", id];
+        query = mysql.format(query,table);
+        connection.query(query,function(err,rows){
+
+        if(Brole == "admin") {
+            res.json({"Error" : [{"Message" : "Error must be admin", "403" : "Must be admin"}]});
+            console.log(St403("403") + " : Must be admin");
+            console.log(error("POST - MessageERROR : Error must be admin"));
+            var query = false;
+            return query;
+        }
+        else{
+          var query = "DELETE FROM `user` WHERE `user`.`id` = " + id;
+          var table = ["user","id",id];
+          query = mysql.format(query,table);
+          connection.query(query,function(err,rows){
+            if(rows == "undefined" || rows == "" || err){
+              reponse = {"Error" : [{"Message" : "Error User Not Found", "404" : "Not Found ErrorResponse"}]};
+              status = St404("404") +(" : Not Found ErrorResponse") + id;
+              put = error("PUT - MessageERROR : Error User Not Updated");
+            }
+
+            else if(err == "Error: Cannot enqueue Query after fatal error.") {
+              reponse = {"Error" : [{"Message" : "Must be connected, define a role", "401" : "Must be connected"}]};
+              status = St401("401") + " : Must be connected";
+              put = error("PUT - MessageERROR : Must be connected, define a role");
+            }
+            else {
+              reponse = {"Error" : [{"Message" : "Data is successfully deleted", "User" : rows, "204" : "No datas"}]};
+              put = success("PUT - MessageSUCCESS : Data is successfully deleted ");
+              status = St204("204") + " : No datas ";
+
+            }
+            res.json(reponse);
+            console.log(status);
+            console.log(put);
+            });
+          }
+    });
+    router.get("/users/search?q",function(req,res){
+        var lastname = req.query.q;
+        console.log(lastname);
+        var query = "SELECT * FROM `user` WHERE `lastname`="+ lastname;
+        var table = ["user","lastname",lastname];
         query = mysql.format(query,table);
         connection.query(query,function(err,rows){
             if(err) {
-                res.json({"Error" : true, "Message" : "Error executing MySQL query"});
-                console.log(error("DELETE - MessageERROR : Error executing MySQL query"));
-            } else {
-                res.json({"Error" : false, "Message" : "Deleted the user with email "+req.params.email});
-                console.log(success("DELETE - MessageSUCCESS : user deleted successfully"));
+                reponse = {"Error" : [{"Message" : "Error Must be connected", "401" : "Must be connected"}]};
+                status = St401("401") +(" : Must be connected");
+                getid = error("GET - MessageERROR : Error Must be connected");
             }
+            else if(rows == "") {
+                reponse = {"Error" : [{"Message" : "Error User Not Found", "404" : "Not Found ErrorResponse"}]};
+                status = St404("404") +(" : Not Found ErrorResponse");
+                getid = error("GET - MessageERROR : Error User Not Found");
+            }
+            else {
+                reponse = {"Success" : [{"Message" : "Success", "User" : rows, "200" : "User definition Object"}]};
+                status = St200("200") + (" : User definition Object");
+                getid = success("GET - MessageSUCCESS : /user/:id") + "  -->  " + email;
+            }
+            res.json(reponse);
+            console.log(status);
+            console.log(getid);
         });
     });
 }
