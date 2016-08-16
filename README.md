@@ -21,42 +21,22 @@ XAMPP marche aussi bien sur linux, mac ou windows et permet dans notre cas,en d�
 Petite appli proposée dans le chrome store très pratique pour envoyé des requètes et voir la magie de l'API à l'oeuvre une fois celle-ci lancé.
 
 # Comment lancer l'API?
-1) Empêcher l'obligation de l'utilisation de `sudo` lors d'installation de package via npm :
+1) Déjà installer tous les paquets avec NPM :
 
 ```bash
-$ sudo chown -R $(whoami) $(npm config get prefix)/{lib/node_modules,bin,share}
+$ npm install
 ```
 
-### Sous Windows
-4) Lancer le terminal NodeJS en admin
+2) Ensuite deux solutions sont possible pour lancer le server :
 
-### Puis, Mac & Windows
-5) Installer Ionic :
+NPM qui marche très bien
 
 ```bash
-$ npm install -g cordova ionic
+$ npm start
 ```
 
-6) Installer les dépendances (platforms et plugins)
+ou nodeJS qui vous donnera une console en couleur
 
 ```bash
-$ ionic state reset
-```
-
-7) Compiler l'application :
-
-```bash
-$ ionic build android
-```
-
-8) Copier les ressources vers les plateformes (icon, splashscreen)
-
-```bash
-$ ionic resources
-```
-
-9) Lancer l'application :
-
-```bash
-$ ionic run android
+$ node server.js
 ```

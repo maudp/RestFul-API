@@ -6,7 +6,7 @@ var success = chalk.bold.green;
 var St200 = chalk.inverse.green; //OK
 var St201 = chalk.inverse.blue; //Created User
 var St202 = chalk.inverse.cyan; //No datas ExistingUser
-var St204 = chalk.inverse.purple; //No datas
+var St204 = chalk.inverse.majenta; //No datas
 var St400 = chalk.inverse.magenta; //ErrorResponse
 var St401 = chalk.inverse.yellow; //Must be connected
 var St403 = chalk.inverse.white; //Must be admin
@@ -19,10 +19,19 @@ function REST_ROUTER(router,connection,md5) {
 
 REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
     var self = this;
+
+    //////////////////////////////////////
+    //          Hello world             //
+    //////////////////////////////////////
+
     router.get("/",function(req,res){
         res.json({"Message" : "Hello API"});
         console.log(chalk.blue("GET - MessageJSON : Hello welcome to Maud's RESTful - API"));
     });
+
+    //////////////////////////////////////
+    //               GET                //
+    //////////////////////////////////////
 
     router.get("/users",function(req,res){
         var query = "SELECT * FROM `user`";
@@ -44,6 +53,10 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
             console.log(get);
         });
     });
+
+    ///////////////////////////////////////
+    //              GET/:id              //
+    ///////////////////////////////////////
 
     router.get("/user/:id",function(req,res){
         var id = req.params.id;
@@ -71,6 +84,10 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
             console.log(getid);
         });
     });
+
+    //////////////////////////////////////
+    //               POST               //
+    //////////////////////////////////////
 
     router.post("/users",function(req,res){
         var Blastname = req.body.lastname;
@@ -121,6 +138,11 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
 
 
     });
+
+
+    //////////////////////////////////////
+    //                PUT               //
+    //////////////////////////////////////
 
     router.put("/user/:id",function(req,res){
       var id = req.params.id;
@@ -220,77 +242,62 @@ REST_ROUTER.prototype.handleRoutes = function(router,connection,md5) {
       }
     });
 
+
+    //////////////////////////////////////
+    //              DELETE              //
+    //////////////////////////////////////
+
     router.delete("/user/:id",function(req,res){
         var id = req.params.id;
         //SELECT * FROM `user` WHERE `id` = "94" AND `role` = "admin"
         var query = "SELECT * FROM `user` WHERE `id` = " + "'" + id + "'" + " AND `role` = 'admin'";
-
         var table = ["user","id", id];
+
         query = mysql.format(query,table);
         connection.query(query,function(err,rows){
 
-        if(Brole == "admin") {
+        if(Array.isArray(rows) && rows.length === 1) {
             res.json({"Error" : [{"Message" : "Error must be admin", "403" : "Must be admin"}]});
             console.log(St403("403") + " : Must be admin");
-            console.log(error("POST - MessageERROR : Error must be admin"));
+            console.log(error("DELETE - MessageERROR : Error must be admin"));
             var query = false;
             return query;
         }
-        else{
+
+        else if(Array.isArray(rows) && rows.length === 0){
+
           var query = "DELETE FROM `user` WHERE `user`.`id` = " + id;
           var table = ["user","id",id];
           query = mysql.format(query,table);
+
           connection.query(query,function(err,rows){
-            if(rows == "undefined" || rows == "" || err){
+
+            var affectedRows = rows.affectedRows;
+
+            if(affectedRows === 0){
               reponse = {"Error" : [{"Message" : "Error User Not Found", "404" : "Not Found ErrorResponse"}]};
               status = St404("404") +(" : Not Found ErrorResponse") + id;
-              put = error("PUT - MessageERROR : Error User Not Updated");
+              delet = error("DELETE - MessageERROR : Error User Not Updated");
             }
 
             else if(err == "Error: Cannot enqueue Query after fatal error.") {
               reponse = {"Error" : [{"Message" : "Must be connected, define a role", "401" : "Must be connected"}]};
               status = St401("401") + " : Must be connected";
-              put = error("PUT - MessageERROR : Must be connected, define a role");
+              delet = error("DELETE - MessageERROR : Must be connected, define a role");
             }
-            else {
+            else if (affectedRows === 1){
               reponse = {"Error" : [{"Message" : "Data is successfully deleted", "User" : rows, "204" : "No datas"}]};
-              put = success("PUT - MessageSUCCESS : Data is successfully deleted ");
+              delet = success("DELETE - MessageSUCCESS : Data is successfully deleted ");
               status = St204("204") + " : No datas ";
-
             }
             res.json(reponse);
             console.log(status);
-            console.log(put);
+            console.log(delet);
             });
-          }
-    });
-    router.get("/users/search?q",function(req,res){
-        var lastname = req.query.q;
-        console.log(lastname);
-        var query = "SELECT * FROM `user` WHERE `lastname`="+ lastname;
-        var table = ["user","lastname",lastname];
-        query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                reponse = {"Error" : [{"Message" : "Error Must be connected", "401" : "Must be connected"}]};
-                status = St401("401") +(" : Must be connected");
-                getid = error("GET - MessageERROR : Error Must be connected");
-            }
-            else if(rows == "") {
-                reponse = {"Error" : [{"Message" : "Error User Not Found", "404" : "Not Found ErrorResponse"}]};
-                status = St404("404") +(" : Not Found ErrorResponse");
-                getid = error("GET - MessageERROR : Error User Not Found");
-            }
-            else {
-                reponse = {"Success" : [{"Message" : "Success", "User" : rows, "200" : "User definition Object"}]};
-                status = St200("200") + (" : User definition Object");
-                getid = success("GET - MessageSUCCESS : /user/:id") + "  -->  " + email;
-            }
-            res.json(reponse);
-            console.log(status);
-            console.log(getid);
+          };
         });
     });
+
 }
 
 module.exports = REST_ROUTER;

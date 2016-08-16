@@ -2,12 +2,14 @@ var express = require("express");
 var mysql   = require("mysql");
 var bodyParser  = require("body-parser");
 var md5 = require('MD5');
+var passport = require('passport');
+var cookieParser = require('cookie-parser')
 var rest = require("./RESTful.api.js");
 var app  = express();
 var chalk = require('chalk'); // works with "node Server.js" not with "npm start"
 var error = chalk.bold.red;
 
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
 
 function REST(){
